@@ -1,0 +1,20 @@
+# Build output
+build/
+
+# CMake / clangd
+.cache/
+compile_commands.json
+
+# Firmware artifacts
+*.elf
+*.hex
+*.bin
+*.map
+*.su
+*.o
+*.d
+
+# IDE / OS
+.vscode/ipch/
+Thumbs.db
+desktop.ini

@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "STM32 SPL Debug (DAP-Link)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "cwd": "${workspaceFolder}",
+            "executable": "${command:cmake.launchTargetPath}",
+            "configFiles": [
+                "${workspaceFolder}/openocd.cfg"
+            ],
+            "device": "STM32F103C8",
+            "runToEntryPoint": "main",
+            "preLaunchTask": "Build"
+        }
+    ]
+}
+
