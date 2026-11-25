@@ -6,10 +6,8 @@
 #include "bsp_delay.h"
 
 /** Soft I2C ******************************/
-#define SOFT_SCL_HIGH()  GPIO_SetBits(SOFT_I2C_SCL_PORT, SOFT_I2C_SCL_PIN)
-#define SOFT_SCL_LOW()   GPIO_ResetBits(SOFT_I2C_SCL_PORT, SOFT_I2C_SCL_PIN)
-#define SOFT_SDA_HIGH()  GPIO_SetBits(SOFT_I2C_SDA_PORT, SOFT_I2C_SDA_PIN)
-#define SOFT_SDA_LOW()   GPIO_ResetBits(SOFT_I2C_SDA_PORT, SOFT_I2C_SDA_PIN)
+#define SOFT_I2C_SCL(BitValue)  GPIO_WriteBit(SOFT_I2C_SCL_PORT, SOFT_I2C_SCL_PIN, (BitAction)BitValue)
+#define SOFT_I2C_SDA(BitValue)  GPIO_WriteBit(SOFT_I2C_SDA_PORT, SOFT_I2C_SDA_PIN, (BitAction)BitValue)
 
 static void Soft_I2C_Init(void) {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -24,33 +22,35 @@ static void Soft_I2C_Init(void) {
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
     GPIO_Init(SOFT_I2C_SDA_PORT, &GPIO_InitStructure);
 
-    SOFT_SCL_HIGH();
-    SOFT_SDA_HIGH();
+    SOFT_I2C_SCL(1);
+    SOFT_I2C_SDA(1);
 }
 
 // --- 内部时序函数 ---
 static void I2C_Start(void) {
-    SOFT_SDA_HIGH(); SOFT_SCL_HIGH(); delay_us(2);
-    SOFT_SDA_LOW();  delay_us(2);
-    SOFT_SCL_LOW();
+    SOFT_I2C_SDA(1); SOFT_I2C_SCL(1); delay_us(2);
+    SOFT_I2C_SDA(0);  delay_us(2);
+    SOFT_I2C_SCL(0);
 }
+
 static void I2C_Stop(void) {
-    SOFT_SDA_LOW();  delay_us(2);
-    SOFT_SCL_HIGH(); delay_us(2);
-    SOFT_SDA_HIGH(); delay_us(2);
+    SOFT_I2C_SDA(0);  delay_us(2);
+    SOFT_I2C_SCL(1); delay_us(2);
+    SOFT_I2C_SDA(1); delay_us(2);
 }
+
 static void I2C_SendByte(uint8_t dat) {
     for (uint8_t i = 0; i < 8; i++) {
-        if (dat & 0x80) SOFT_SDA_HIGH(); else SOFT_SDA_LOW();
+        if (dat & 0x80) SOFT_I2C_SDA(1); else SOFT_I2C_SDA(0);
         delay_us(2);
-        SOFT_SCL_HIGH(); delay_us(2);
-        SOFT_SCL_LOW();  delay_us(2);
+        SOFT_I2C_SCL(1); delay_us(2);
+        SOFT_I2C_SCL(0);  delay_us(2);
         dat <<= 1;
     }
     // 接收 ACK（省略详细逻辑，直接拉高拉低）
-    SOFT_SDA_HIGH(); delay_us(2);
-    SOFT_SCL_HIGH(); delay_us(2);
-    SOFT_SCL_LOW();
+    SOFT_I2C_SDA(1); delay_us(2);
+    SOFT_I2C_SCL(1); delay_us(2);
+    SOFT_I2C_SCL(0);
 }
 
 static void Soft_I2C_Write(uint8_t devAddr, uint8_t reg, uint8_t* data,uint16_t len){

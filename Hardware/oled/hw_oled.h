@@ -8,12 +8,25 @@
 #include <stdint.h>
 #include "bsp_i2c.h"
 
-#define OLED_ADDR 0x78
+
 #define OLED_WIDTH  128
 #define OLED_HEIGHT 64
 
+// 驱动芯片宏开关：默认 SSD1306
+// 需要 SH1106 时，在编译器的预处理宏（如 Keil 的 Define、CMake 的 -D）中添加 SH_1106
+// #define SH_1106
 
-void OLED_Init(I2C_Ops_t* bus);
+#ifndef SH_1106
+#define SSD_1306
+#define OLED_ADDR   0x78
+#define OLED_IS_SH1106   0
+#else
+#define OLED_ADDR   0x7A
+#define OLED_IS_SH1106   1
+#endif
+
+
+void OLED_Init(I2C_Ops_t* bus); // 初始化（芯片类型由上方宏自动决定）
 void OLED_Clear(void);
 void OLED_Refresh(void); // 将内部显存刷新到屏幕
 

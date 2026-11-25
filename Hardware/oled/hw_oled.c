@@ -19,7 +19,26 @@ void OLED_Init(I2C_Ops_t* bus) {
     oled_bus = bus; // 绑定注入的总线
     oled_bus->init(); // 初始化总线
 
-    // SSD1306 初始化序列 (常用精简版)
+#if OLED_IS_SH1106
+    // ===== SH1106 初始化序列 =====
+    // 注意：SH1106 不支持 0x20 内存寻址模式指令，电荷泵为 0xAD/0x8B
+    OLED_WriteCmd(0xAE); // 关闭显示
+    OLED_WriteCmd(0xD5); OLED_WriteCmd(0x80); // 设置时钟分频
+    OLED_WriteCmd(0xA8); OLED_WriteCmd(0x3F); // 设置驱动路数 (64行)
+    OLED_WriteCmd(0xD3); OLED_WriteCmd(0x00); // 设置显示偏移
+    OLED_WriteCmd(0x40); // 起始行
+    OLED_WriteCmd(0xAD); OLED_WriteCmd(0x8B); // 开启电荷泵 (SH1106)
+    OLED_WriteCmd(0xA1); // 段重映射
+    OLED_WriteCmd(0xC8); // 整体重映射
+    OLED_WriteCmd(0xDA); OLED_WriteCmd(0x12); // 设置COM引脚硬件配置
+    OLED_WriteCmd(0x81); OLED_WriteCmd(0xCF); // 设置对比度
+    OLED_WriteCmd(0xD9); OLED_WriteCmd(0xF1); // 设置预充电周期
+    OLED_WriteCmd(0xDB); OLED_WriteCmd(0x40); // 设置VCOMH
+    OLED_WriteCmd(0xA4); // 开启全局显示
+    OLED_WriteCmd(0xA6); // 正常显示 (非反色)
+    OLED_WriteCmd(0xAF); // 开启显示
+#else
+    // ===== SSD1306 初始化序列 (常用精简版) =====
     OLED_WriteCmd(0xAE); // 关闭显示
     OLED_WriteCmd(0xD5); OLED_WriteCmd(0x80); // 设置时钟分频
     OLED_WriteCmd(0xA8); OLED_WriteCmd(0x3F); // 设置驱动路数 (64行)
@@ -36,6 +55,7 @@ void OLED_Init(I2C_Ops_t* bus) {
     OLED_WriteCmd(0xA4); // 开启全局显示
     OLED_WriteCmd(0xA6); // 正常显示 (非反色)
     OLED_WriteCmd(0xAF); // 开启显示
+#endif
 
     OLED_Clear();
     OLED_Refresh();
@@ -53,7 +73,11 @@ void OLED_Clear(void) {
 void OLED_Refresh(void) {
     for (uint8_t page = 0; page < 8; page++) {
         OLED_WriteCmd(0xB0 + page);              // 设置页地址 (0~7)
+#if OLED_IS_SH1106
+        OLED_WriteCmd(0x02);                     // 设置列低地址 (SH1106 起始列偏移 2，否则画面右移)
+#else
         OLED_WriteCmd(0x00);                     // 设置列低地址
+#endif
         OLED_WriteCmd(0x10);                     // 设置列高地址
 
         oled_bus->write(OLED_ADDR, 0x40, &OLED_GRAM[page][0], OLED_WIDTH);
